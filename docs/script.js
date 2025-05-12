@@ -1,8 +1,6 @@
 let tasks = [];
 const API_URL = 'http://localhost:3000';
 
-// Пароль для доступа
-const PASSWORD = "a04042022a";
 
 function updateTaskInputVisibility() {
     if (localStorage.getItem('isAuthenticated') === 'true') {
@@ -33,7 +31,7 @@ function updateUIByAuth() {
 }
 
 // Загружаем задачи при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     loadTasks();
     updateUIByAuth();
 });
@@ -47,16 +45,40 @@ function toggleLoginForm() {
     }
 }
 
-function checkPassword() {
+async function checkPassword() {
     const passwordInput = document.getElementById('password');
-    if (passwordInput.value === PASSWORD) {
-        localStorage.setItem('isAuthenticated', 'true');
-        updateUIByAuth();
-    } else {
-        alert('Неверный пароль!');
+    const inputPassword = passwordInput.value;
+    
+    // Хэш правильного пароля (заранее вычисленный)
+    const PASSWORD_HASH = 'b8a7d224d8d558834c767c393ff4eaf7913b6b6ce10dc29a11859707af1ac2a9';
+    
+    try {
+        // Кодируем введённый пароль
+        const encoder = new TextEncoder();
+        const data = encoder.encode(inputPassword);
+        
+        // Вычисляем хэш SHA-256
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        
+        // Конвертируем ArrayBuffer в hex-строку
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        // Сравниваем с хранимым хэшем
+        if (hashHex === PASSWORD_HASH) {
+            localStorage.setItem('isAuthenticated', 'true');
+            updateUIByAuth();
+        } else {
+            alert(`Неверный пароль!\nВычисленный хэш: ${hashHex}\nОжидаемый хэш: ${PASSWORD_HASH}`);
+            passwordInput.value = '';
+        }
+    } catch (error) {
+        console.error('Ошибка при проверке пароля:', error);
+        alert('Произошла ошибка при проверке пароля');
         passwordInput.value = '';
     }
 }
+
 
 function toggleLogin() {
     if (localStorage.getItem('isAuthenticated') === 'true') {
@@ -128,12 +150,12 @@ async function addTask() {
     const taskSubject = document.getElementById('taskSubject').value;
     const taskText = document.getElementById('taskText').value;
     const taskTime = document.getElementById('taskTime').value;
-    
+
     if (taskSubject.trim() === '' || taskText.trim() === '') {
         alert('Пожалуйста, введите предмет и задачу');
         return;
     }
-    
+
     const task = {
         id: Date.now(),
         subject: taskSubject,
@@ -141,7 +163,7 @@ async function addTask() {
         time: taskTime,
         completed: false
     };
-    
+
     try {
         const response = await fetch(`${API_URL}/tasks`, {
             method: 'POST',
@@ -150,11 +172,11 @@ async function addTask() {
             },
             body: JSON.stringify(task)
         });
-        
+
         if (response.ok) {
             tasks.push(task);
             renderTasks();
-            
+
             // Очищаем поля ввода
             document.getElementById('taskSubject').value = '';
             document.getElementById('taskText').value = '';
@@ -210,21 +232,21 @@ async function editTask(taskId) {
     // Создаем форму редактирования
     const editForm = document.createElement('div');
     editForm.className = 'edit-form';
-    
+
     const subjectInput = document.createElement('input');
     subjectInput.type = 'text';
     subjectInput.value = task.subject;
     subjectInput.placeholder = 'Предмет...';
-    
+
     const textInput = document.createElement('input');
     textInput.type = 'text';
     textInput.value = task.text;
     textInput.placeholder = 'Задача...';
-    
+
     const dateInput = document.createElement('input');
     dateInput.type = 'date';
     dateInput.value = task.time;
-    
+
     const saveButton = document.createElement('button');
     saveButton.textContent = 'Сохранить';
     saveButton.onclick = async () => {
@@ -234,7 +256,7 @@ async function editTask(taskId) {
             text: textInput.value,
             time: dateInput.value
         };
-        
+
         try {
             const response = await fetch(`${API_URL}/tasks/${taskId}`, {
                 method: 'PATCH',
@@ -243,7 +265,7 @@ async function editTask(taskId) {
                 },
                 body: JSON.stringify(updatedTask)
             });
-            
+
             if (response.ok) {
                 Object.assign(task, updatedTask);
                 renderTasks();
@@ -252,19 +274,19 @@ async function editTask(taskId) {
             console.error('Ошибка при обновлении задачи:', error);
         }
     };
-    
+
     const cancelButton = document.createElement('button');
     cancelButton.textContent = 'Отмена';
     cancelButton.onclick = () => {
         renderTasks();
     };
-    
+
     editForm.appendChild(subjectInput);
     editForm.appendChild(textInput);
     editForm.appendChild(dateInput);
     editForm.appendChild(saveButton);
     editForm.appendChild(cancelButton);
-    
+
     // Очищаем содержимое li и добавляем форму
     li.innerHTML = '';
     li.appendChild(editForm);
@@ -273,10 +295,10 @@ async function editTask(taskId) {
 function renderTasks() {
     const pendingTasksList = document.getElementById('pendingTasks');
     const completedTasksList = document.getElementById('completedTasks');
-    
+
     pendingTasksList.innerHTML = '';
     completedTasksList.innerHTML = '';
-    
+
     // Сортируем задачи по дате
     const sortedTasks = [...tasks].sort((a, b) => {
         if (!a.time) return 1;
@@ -285,26 +307,26 @@ function renderTasks() {
     });
 
     const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-    
+
     sortedTasks.forEach(task => {
         const li = document.createElement('li');
         li.setAttribute('data-task-id', task.id);
-        
+
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.className = 'checkbox';
         checkbox.checked = task.completed;
-        checkbox.onclick = () => { if(isAuth) toggleTask(task.id); };
+        checkbox.onclick = () => { if (isAuth) toggleTask(task.id); };
         checkbox.disabled = !isAuth;
-        
+
         const taskSubject = document.createElement('span');
         taskSubject.className = 'task-subject';
         taskSubject.textContent = task.subject;
-        
+
         const taskText = document.createElement('span');
         taskText.className = 'task-text';
         taskText.textContent = task.text;
-        
+
         const taskTime = document.createElement('span');
         taskTime.className = 'task-time';
         if (task.time) {
@@ -337,7 +359,7 @@ function renderTasks() {
             deleteButton.onclick = () => deleteTask(task.id);
             li.appendChild(deleteButton);
         }
-        
+
         if (task.completed) {
             completedTasksList.appendChild(li);
         } else {

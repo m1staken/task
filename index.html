@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои задачи</title>
+    <link rel="stylesheet" href="docs/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Мои задачи</h1>
+        <button id="loginBtn" onclick="toggleLoginForm()" class="login-btn">Войти для редактирования</button>
+        
+        <div id="loginForm" class="login-form" style="display: none;">
+            <div class="login-input">
+                <input type="password" id="password" placeholder="Введите пароль">
+                <button onclick="checkPassword()">Войти</button>
+            </div>
+        </div>
+
+        <div class="task-input" id="taskInput" style="display: none;">
+            <input type="text" id="taskSubject" placeholder="Предмет...">
+            <input type="text" id="taskText" placeholder="Задача...">
+            <input type="date" id="taskTime">
+            <button onclick="addTask()">Добавить</button>
+        </div>
+
+        <div class="tasks-container">
+            <div class="pending-tasks">
+                <h2>Текущие задачи</h2>
+                <ul id="pendingTasks"></ul>
+            </div>
+            
+            <div class="completed-tasks">
+                <h2>Выполненные задачи</h2>
+                <ul id="completedTasks"></ul>
+            </div>
+        </div>
+    </div>
+    <script src="docs/script.js"></script>
+</body>
+</html>

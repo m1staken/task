@@ -69,7 +69,6 @@ async function checkPassword() {
             localStorage.setItem('isAuthenticated', 'true');
             updateUIByAuth();
         } else {
-            alert(`Неверный пароль!\nВычисленный хэш: ${hashHex}\nОжидаемый хэш: ${PASSWORD_HASH}`);
             passwordInput.value = '';
         }
     } catch (error) {
